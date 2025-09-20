@@ -1,0 +1,70 @@
+<!-- TITELSEITE – Einstieg ins Spiel -->
+<div id="startPage" class="page active">
+<h1>Willkommen bei 3 Felder</h1>
+<!-- Button zum Wechsel auf die Einstellungsseite -->
+<button onclick="showPage('settingsPage')">Spiel starten</button>
+</div>
+
+<!-- EINSTELLUNGSSEITE – Spielkonfiguration -->
+<div id="settingsPage" class="page">
+<h2>Spieleinstellungen</h2>
+
+<!-- Navigation zurück zur Titelseite -->
+<button onclick="showPage('startPage')">Titelseite</button>
+
+<!-- Rasterauswahl für Spielfeldgröße -->
+<p>Rasterauswahl:</p>
+<div id="gridSelector">
+<div class="gridOption" onclick="selectGrid(3)">3×3</div>
+<div class="gridOption" onclick="selectGrid(4)">4×4</div>
+<div class="gridOption selected" onclick="selectGrid(5)">5×5</div>
+<div class="gridOption" onclick="selectGrid(6)">6×6</div>
+</div>
+
+<!-- Eingabefelder für Spieler -->
+<label>Spieler-Name:</label>
+<input type="text" id="playerName" value="Spieler"><br><br>
+
+<label>Spieler-Symbol:</label>
+<input type="text" id="playerInput" maxlength="3" value="X">
+
+<label>Spieler-Farbe:</label>
+<input type="color" id="playerColor" value="#ffff00"><br><br>
+
+<!-- Eingabefelder für KI -->
+<label>KI-Name:</label>
+<input type="text" id="aiName" value="KI"><br><br>
+
+<label>KI-Symbol:</label>
+<input type="text" id="aiInput" maxlength="3" value="O">
+
+<label>KI-Farbe:</label>
+<input type="color" id="aiColor" value="#1802f2"><br><br>
+
+<!-- Start des Spiels -->
+<button onclick="startGame()">Spiel beginnen</button>
+</div>
+
+<!-- SPIELSEITE – aktives Spielfeld -->
+<div id="gamePage" class="page">
+<!-- Spielüberschrift mit Spielernamen -->
+<h2 id="gameTitle">Spiel läuft</h2>
+
+<!-- Punktestand -->
+<p id="score">Spieler: 0 | KI: 0</p>
+
+<!-- Spielfeld wird dynamisch erzeugt -->
+<div id="gameBoard"></div>
+</div>
+
+<!-- ERGEBNISSEITE – Spielauswertung -->
+<div id="resultPage" class="page">
+<h2>Spiel beendet</h2>
+
+<!-- Ergebnistext (z. B. „Spieler gewinnt“) -->
+<p id="resultText"></p>
+
+<!-- Navigation zurück -->
+<button onclick="showPage('settingsPage')">Zurück zu Einstellungen</button>
+<button onclick="showPage('startPage')">Zurück zur Startseite</button>
+</div>

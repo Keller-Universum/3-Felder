@@ -1,0 +1,99 @@
+/* ────────────────────────────── */
+/* Seitenstruktur und Übergänge  */
+/* ────────────────────────────── */
+
+.page {
+  margin: 20px;
+  opacity: 0;                      /* Unsichtbar beim Start */
+  transition: opacity 0.5s ease;   /* Fade-Effekt beim Seitenwechsel */
+  display: none;                   /* Standardmäßig ausgeblendet */
+}
+
+.page.active {
+  display: block !important;       /* Sichtbar, wenn aktiv */
+  opacity: 1;                      /* Voll sichtbar */
+}
+
+/* ────────────────────────────── */
+/* Spielfeld-Layout              */
+/* ────────────────────────────── */
+
+#gameBoard {
+  display: grid;                   /* Rasterdarstellung */
+  grid-gap: 5px;                   /* Abstand zwischen Zellen */
+  margin-top: 10px;
+}
+
+/* ────────────────────────────── */
+/* Zellen im Spielfeld           */
+/* ────────────────────────────── */
+
+.cell {
+  width: 60px;
+  height: 60px;
+  background-color: #eee;          /* Standardfarbe */
+  text-align: center;
+  line-height: 60px;
+  font-size: 18px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+
+/* ────────────────────────────── */
+/* Blockierte Felder             */
+/* ────────────────────────────── */
+
+.blocked {
+  background-color: #999 !important; /* Graue Sperrfarbe */
+  pointer-events: none;              /* Nicht anklickbar */
+}
+
+/* ────────────────────────────── */
+/* Letzter Zug (visuelle Markierung) */
+/* ────────────────────────────── */
+
+.lastMove {
+  border: 3px solid black !important; /* Schwarzer Rahmen für letzten Zug */
+}
+
+/* ────────────────────────────── */
+/* Eingabefelder und Labels      */
+/* ────────────────────────────── */
+
+input[type="text"] {
+  width: 80px;
+  margin-right: 10px;
+}
+
+input[type="color"] {
+  margin-right: 20px;
+}
+
+label {
+  margin-right: 5px;
+}
+
+/* ────────────────────────────── */
+/* Rasterauswahl                 */
+/* ────────────────────────────── */
+
+#gridSelector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.gridOption {
+  padding: 10px;
+  border: 2px solid #ccc;
+  cursor: pointer;
+  user-select: none;
+  background-color: #f0f0f0;
+}
+
+.gridOption.selected {
+  border-color: #000;
+  background-color: #ddd;
+}
+
