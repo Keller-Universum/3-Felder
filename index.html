@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>3 Felder</title>
+  <style>
+    /* ────────────────────────────── */
+/* Seitenstruktur und Übergänge  */
+/* ────────────────────────────── */
+
+.page {
+  margin: 20px;
+  opacity: 0;                      /* Unsichtbar beim Start */
+  transition: opacity 0.5s ease;   /* Fade-Effekt beim Seitenwechsel */
+  display: none;                   /* Standardmäßig ausgeblendet */
+}
+
+.page.active {
+  display: block !important;       /* Sichtbar, wenn aktiv */
+  opacity: 1;                      /* Voll sichtbar */
+}
+
+
+/* ────────────────────────────── */
+/* Spielfeld-Layout              */
+/* ────────────────────────────── */
+
+#gameBoard {
+  display: grid;                   /* Rasterdarstellung */
+  grid-gap: 5px;                   /* Abstand zwischen Zellen */
+  margin-top: 10px;
+}
+
+
+/* ────────────────────────────── */
+/* Zellen im Spielfeld           */
+/* ────────────────────────────── */
+
+.cell {
+  width: 60px;
+  height: 60px;
+  background-color: #eee;          /* Standardfarbe */
+  text-align: center;
+  line-height: 60px;
+  font-size: 18px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+
+
+/* ────────────────────────────── */
+/* Blockierte Felder             */
+/* ────────────────────────────── */
+
+.blocked {
+  background-color: #999 !important; /* Graue Sperrfarbe */
+  pointer-events: none;              /* Nicht anklickbar */
+}
+
+
+/* ────────────────────────────── */
+/* Letzter Zug (visuelle Markierung) */
+/* ────────────────────────────── */
+
+.lastMove {
+  border: 3px solid black !important; /* Schwarzer Rahmen für letzten Zug */
+}
+
+
+/* ────────────────────────────── */
+/* Eingabefelder und Labels      */
+/* ────────────────────────────── */
+
+input[type="text"] {
+  width: 80px;
+  margin-right: 10px;
+}
+
+input[type="color"] {
+  margin-right: 20px;
+}
+
+label {
+  margin-right: 5px;
+}
+
+
+/* ────────────────────────────── */
+/* Rasterauswahl                 */
+/* ────────────────────────────── */
+
+#gridSelector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.gridOption {
+  padding: 10px;
+  border: 2px solid #ccc;
+  cursor: pointer;
+  user-select: none;
+  background-color: #f0f0f0;
+}
+
+.gridOption.selected {
+  border-color: #000;
+  background-color: #ddd;
+}
+
+  </style>
+</head>
+<body>
+  <!-- TITELSEITE – Einstieg ins Spiel -->
+<div id="startPage" class="page active">
+<h1>Willkommen bei 3 Felder</h1>
+<!-- Button zum Wechsel auf die Einstellungsseite -->
+<button onclick="showPage('settingsPage')">Spiel starten</button>
+</div>
+
+<!-- EINSTELLUNGSSEITE – Spielkonfiguration -->
+<div id="settingsPage" class="page">
+<h2>Spieleinstellungen</h2>
+
+<!-- Navigation zurück zur Titelseite -->
+<button onclick="showPage('startPage')">Titelseite</button>
+
+<!-- Rasterauswahl für Spielfeldgröße -->
+<p>Rasterauswahl:</p>
+<div id="gridSelector">
+<div class="gridOption" onclick="selectGrid(3)">3×3</div>
+<div class="gridOption" onclick="selectGrid(4)">4×4</div>
+<div class="gridOption selected" onclick="selectGrid(5)">5×5</div>
+<div class="gridOption" onclick="selectGrid(6)">6×6</div>
+</div>
+
+<!-- Eingabefelder für Spieler -->
+<label>Spieler-Name:</label>
+<input type="text" id="playerName" value="Spieler"><br><br>
+
+<label>Spieler-Symbol:</label>
+<input type="text" id="playerInput" maxlength="3" value="X">
+
+<label>Spieler-Farbe:</label>
+<input type="color" id="playerColor" value="#ffff00"><br><br>
+
+<!-- Eingabefelder für KI -->
+<label>KI-Name:</label>
+<input type="text" id="aiName" value="KI"><br><br>
+
+<label>KI-Symbol:</label>
+<input type="text" id="aiInput" maxlength="3" value="O">
+
+<label>KI-Farbe:</label>
+<input type="color" id="aiColor" value="#1802f2"><br><br>
+
+<!-- Start des Spiels -->
+<button onclick="startGame()">Spiel beginnen</button>
+</div>
+
+<!-- SPIELSEITE – aktives Spielfeld -->
+<div id="gamePage" class="page">
+<!-- Spielüberschrift mit Spielernamen -->
+<h2 id="gameTitle">Spiel läuft</h2>
+
+<!-- Punktestand -->
+<p id="score">Spieler: 0 | KI: 0</p>
+
+<!-- Spielfeld wird dynamisch erzeugt -->
+<div id="gameBoard"></div>
+</div>
+
+<!-- ERGEBNISSEITE – Spielauswertung -->
+<div id="resultPage" class="page">
+<h2>Spiel beendet</h2>
+
+<!-- Ergebnistext (z. B. „Spieler gewinnt“) -->
+<p id="resultText"></p>
+
+<!-- Navigation zurück -->
+<button onclick="showPage('settingsPage')">Zurück zu Einstellungen</button>
+<button onclick="showPage('startPage')">Zurück zur Startseite</button>
+</div>
+
+  <script>
+    // ─────────────────────────────────────────────
+// Globale Variablen für Spielzustand und Design
+// ─────────────────────────────────────────────
+
+let board = [];                    // Spielfeld als Array
+let playerSymbol = "X";            // Symbol des Spielers
+let aiSymbol = "O";                // Symbol der KI
+let playerColor = "#ffff00";       // Standardfarbe Spieler (Gelb)
+let aiColor = "#1802f2";           // Standardfarbe KI (KU-Blau)
+let playerScore = 0;               // Punktestand Spieler
+let aiScore = 0;                   // Punktestand KI
+let playerName = "Spieler";        // Name des Spielers
+let aiName = "KI";                 // Name der KI
+let gridSize = 5;                  // Standardgröße des Rasters
+let lastPlayerIndex = null;        // Index des letzten Spielerzugs
+let lastAiIndex = null;            // Index des letzten KI-Zugs
+
+// ─────────────────────────────────────────────
+// Startseite initial anzeigen (Fade-Effekt)
+// ─────────────────────────────────────────────
+
+window.onload = () => {
+  const start = document.getElementById("startPage");
+  start.style.display = "block";
+  setTimeout(() => start.classList.add("active"), 10);
+};
+
+// ─────────────────────────────────────────────
+// Seitenwechsel mit Fade-Übergang
+// ─────────────────────────────────────────────
+
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.remove("active");
+    setTimeout(() => p.style.display = "none", 500);
+  });
+  const target = document.getElementById(id);
+  setTimeout(() => {
+    target.style.display = "block";
+    setTimeout(() => target.classList.add("active"), 10);
+  }, 500);
+}
+
+// ─────────────────────────────────────────────
+// Rastergröße auswählen
+// ─────────────────────────────────────────────
+
+function selectGrid(size) {
+  gridSize = size;
+  document.querySelectorAll(".gridOption").forEach(opt => opt.classList.remove("selected"));
+  document.querySelectorAll(".gridOption").forEach(opt => {
+    if (opt.innerText === `${size}×${size}`) opt.classList.add("selected");
+  });
+}
+
+// ─────────────────────────────────────────────
+// Spiel initial starten
+// ─────────────────────────────────────────────
+
+function startGame() {
+  playerName = document.getElementById("playerName").value || "Spieler";
+  aiName = document.getElementById("aiName").value || "KI";
+  playerSymbol = document.getElementById("playerInput").value || "X";
+  aiSymbol = document.getElementById("aiInput").value || "O";
+  playerColor = document.getElementById("playerColor").value || "#ffff00";
+  aiColor = document.getElementById("aiColor").value || "#1802f2";
+
+  board = [];
+  document.getElementById("gameBoard").innerHTML = "";
+  document.getElementById("gameBoard").style.gridTemplateColumns = `repeat(${gridSize}, 60px)`;
+
+  for (let i = 0; i < gridSize * gridSize; i++) {
+    board.push("");
+    let cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.index = i;
+    cell.onclick = () => playerMove(i);
+    document.getElementById("gameBoard").appendChild(cell);
+  }
+
+  playerScore = 0;
+  aiScore = 0;
+  lastPlayerIndex = null;
+  lastAiIndex = null;
+  updateScore();
+  document.getElementById("gameTitle").innerText = `${playerName} vs ${aiName}`;
+  showPage("gamePage");
+}
+
+// ─────────────────────────────────────────────
+// Spielerzug ausführen
+// ─────────────────────────────────────────────
+
+function playerMove(index) {
+  if (board[index] !== "") return;
+  board[index] = playerSymbol;
+  lastPlayerIndex = index;
+  updateBoard();
+  checkScore(playerSymbol);
+  if (isGameOver()) showResult();
+  else setTimeout(aiMove, 1000); // KI-Zug mit Verzögerung
+}
+
+// ─────────────────────────────────────────────
+// KI-Zug ausführen
+// ─────────────────────────────────────────────
+
+function aiMove() {
+  let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+  if (empty.length === 0) return;
+  let choice = empty[Math.floor(Math.random() * empty.length)];
+  board[choice] = aiSymbol;
+  lastAiIndex = choice;
+  updateBoard();
+  checkScore(aiSymbol);
+  if (isGameOver()) showResult();
+}
+
+// ─────────────────────────────────────────────
+// Punkte prüfen (3er-Reihen horizontal/vertikal)
+// ─────────────────────────────────────────────
+
+function checkScore(currentSymbol) {
+  let found = [];
+
+  // Horizontal prüfen
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c <= gridSize - 3; c++) {
+      let i = r * gridSize + c;
+      if (board[i] === currentSymbol &&
+          board[i+1] === currentSymbol &&
+          board[i+2] === currentSymbol) {
+        found.push(i, i+1, i+2);
+      }
+    }
+  }
+
+  // Vertikal prüfen
+  for (let c = 0; c < gridSize; c++) {
+    for (let r = 0; r <= gridSize - 3; r++) {
+      let i = r * gridSize + c;
+      if (board[i] === currentSymbol &&
+          board[i+gridSize] === currentSymbol &&
+          board[i+gridSize*2] === currentSymbol) {
+        found.push(i, i+gridSize, i+gridSize*2);
+      }
+    }
+  }
+
+  // Punkte vergeben und Felder blockieren
+  if (found.length > 0) {
+    found.forEach(i => board[i] = "BLOCK");
+    if (currentSymbol === playerSymbol) playerScore++;
+    if (currentSymbol === aiSymbol) aiScore++;
+    updateScore();
+  }
+
+  updateBoard();
+}
+
+// ─────────────────────────────────────────────
+// Spielfeld visuell aktualisieren
+// ─────────────────────────────────────────────
+
+function updateBoard() {
+  document.querySelectorAll(".cell").forEach((cell, i) => {
+    cell.classList.remove("lastMove");
+
+    if (board[i] === "BLOCK") {
+      cell.innerText = "";
+      cell.classList.add("blocked");
+      cell.style.backgroundColor = "#999";
+    } else {
+      cell.innerText = board[i];
+      cell.classList.remove("blocked");
+
+      // Farben setzen
+      if (board[i] === playerSymbol) {
+        cell.style.backgroundColor = playerColor;
+      } else if (board[i] === aiSymbol) {
+        cell.style.backgroundColor = aiColor;
+      } else {
+        cell.style.backgroundColor = "#eee";
+      }
+    }
+
+    // Letzten Zug hervorheben
+    if (i === lastPlayerIndex || i === lastAiIndex) {
+      cell.classList.add("lastMove");
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// Punktestand aktualisieren
+// ─────────────────────────────────────────────
+
+function updateScore() {
+  document.getElementById("score").innerText =
+    `${playerName}: ${playerScore} | ${aiName}: ${aiScore}`;
+}
+
+// ─────────────────────────────────────────────
+// Spielende prüfen
+// ─────────────────────────────────────────────
+
+function isGameOver() {
+  return board.every(cell => cell !== "");
+}
+
+// ─────────────────────────────────────────────
+// Ergebnis anzeigen
+// ─────────────────────────────────────────────
+
+function showResult() {
+  let result = "";
+  if (playerScore > aiScore) {
+    result = `${playerName} gewinnt mit ${playerScore} zu ${aiScore} gegen ${aiName}.`;
+  } else if (aiScore > playerScore) {
+    result = `${aiName} gewinnt mit ${aiScore} zu ${playerScore} gegen ${playerName}.`;
+  } else {
+    result = `${playerName} und ${aiName} spielen ${playerScore} zu ${aiScore} unentschieden.`;
+  }
+
+  document.getElementById("resultText").innerText = result;
+  showPage("resultPage");
+}
+
+  </script>
+</body>
+</html>
